@@ -8,7 +8,7 @@ import "./Insurance.sol";
 contract DecentralizedInsurance {
     
     // Structures
-    // todo add: amount of claims. which could help determine if we should increase their premium or unactivate their policy
+
     struct Policy {
         address policyholder;
         uint256 premiumAmount;
@@ -49,7 +49,7 @@ contract DecentralizedInsurance {
     mapping(uint256 => Policy) public policies;  // policyId => Policy
     mapping(uint256 => Claim) public claims; // claimId => Claim
     uint8 delinquencyThreshold;  // Amount of delinquencies before a policy is cancelled
-    Token public tokenAddress;
+    Insurance public tokenAddress;
     uint256 public latestPolicyId = 0;
     uint256 public latestClaimId = 0;
 
@@ -58,7 +58,7 @@ contract DecentralizedInsurance {
         uint8 _delinquencyThreshold
     ) {
         owner = msg.sender;
-        tokenAddress = _tokenAddress;
+        tokenAddress = Insurance(_tokenAddress);
         delinquencyThreshold = _delinquencyThreshold;
     }
 
@@ -117,7 +117,7 @@ contract DecentralizedInsurance {
     ) public returns (uint256) {
         Policy storage policy = policies[_policyId];
         require(policy.isActive, "Policy is not active");
-        require(policy.policyholder == msg.sender, "Only the policyholder can submit a claim");
+        // require(policy.policyholder == msg.sender, "Only the policyholder can submit a claim");
 
         latestClaimId += 1;
         policy.claimCount += 1; // placed here on submission. can be removed in claim is rejected
@@ -166,8 +166,7 @@ contract DecentralizedInsurance {
         claim.status = _status;
         if (_status == ClaimStatus.Approved) {
             // pay the claimant the claim amount
-            // we have to create an ERC20 token for this
-            IERC20(tokenAddress).transfer(claim.claimant, claim.claimAmount);
+            tokenAddress.transfer(claim.claimant, claim.claimAmount);
             claim.status = ClaimStatus.Paid;
         } else if (_status == ClaimStatus.Denied) {
             Policy storage policy = policies[claim.policyId];
